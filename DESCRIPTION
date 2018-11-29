@@ -22,5 +22,5 @@ Suggests: testthat, vdiffr, covr, knitr, rmarkdown, ica, plotly, geigen
 URL: https://github.com/craddm/eegUtils
 BugReports: https://github.com/craddm/eegUtils/issues
 VignetteBuilder: knitr
+biocViews:
 Repository: Neuroconductor
-biocViews: 
