@@ -29,7 +29,8 @@ interp_elecs.default <- function(data, bad_elecs, ...) {
 #' @describeIn interp_elecs Interpolate EEG channel(s)
 #' @export
 interp_elecs.eeg_data <- function(data,
-                                  bad_elecs, ...) {
+                                  bad_elecs,
+                                  ...) {
 
   if (is.null(data$chan_info)) {
     stop("No channel locations found.")
@@ -48,6 +49,7 @@ interp_elecs.eeg_data <- function(data,
     bad_elecs <- bad_elecs[bads_check]
   }
 
+  data$chan_info <- validate_channels(data)
   missing_coords <- apply(is.na(data$chan_info), 1, any)
   missing_chans <- names(data$signals)[missing_coords]
 
@@ -59,15 +61,17 @@ interp_elecs.eeg_data <- function(data,
 
   chan_info <- data$chan_info[!missing_coords, ]
 
-  # Note - this checks for old-style electrode locations first, then for new style
+  # Note - this checks for old-style electrode locations first, then for new
+  # style
   check_ci_str(chan_info)
 
   if (all(c("cart_x", "cart_y", "cart_z") %in% names(chan_info))) {
     xyz_coords <- chan_info[, c("cart_x", "cart_y", "cart_z")]
 
     #normalise to unit sphere
-    rads <- sqrt(rowSums(xyz_coords ^ 2))
-    xyz_coords <- xyz_coords / rads
+    #rads <- sqrt(rowSums(xyz_coords ^ 2))
+    #xyz_coords <- xyz_coords / rads
+    xyz_coords <- norm_sphere(xyz_coords)
   } else {
     xyz_coords <- sph_to_cart(chan_info$sph_theta / 180 * pi,
                               chan_info$sph_phi / 180 * pi,
@@ -128,6 +132,13 @@ spheric_spline <- function(good_elecs,
   W
 }
 
+#' Interpolate channels
+#' @param .data Channel data containing all data
+#' @param bad_chans Vector of names of bad channels
+#' @param missing_coords Logical vector indicating any channels in the data that
+#'   had no associated coordinates
+#' @param weights Spherical spline weights for interpolation
+#' @keywords internal
 interp_chans <- function(.data,
                          bad_chans,
                          missing_coords = FALSE,
@@ -135,7 +146,7 @@ interp_chans <- function(.data,
 
   bad_cols <- (toupper(names(.data)) %in% toupper(bad_chans)) | missing_coords
   weight_rows <- names(.data[, !missing_coords]) %in% bad_chans
-  new_chans <- weights[weight_rows, ] %*% t(.data[ , !bad_cols])
+  new_chans <- weights[weight_rows, , drop = TRUE] %*% t(.data[ , !bad_cols])
   .data[, bad_chans] <- t(new_chans)
   .data
 }
@@ -240,8 +251,9 @@ convert_to_csd <- function(data,
   if (all(c("cart_x", "cart_y", "cart_z") %in% names(data$chan_info))) {
     xyz_coords <- data$chan_info[, c("cart_x", "cart_y", "cart_z")]
     #normalise to unit sphere
-    rads <- sqrt(xyz_coords$cart_x ^ 2 + xyz_coords$cart_y ^ 2 + xyz_coords$cart_z ^ 2)
-    xyz_coords <- xyz_coords / rads
+    #rads <- sqrt(xyz_coords$cart_x ^ 2 + xyz_coords$cart_y ^ 2 + xyz_coords$cart_z ^ 2)
+    #xyz_coords <- xyz_coords / rads
+    xyz_coords <- norm_sphere(xyz_coords)
   } else {
     xyz_coords <- sph_to_cart(data$chan_info$sph_theta / 180 * pi,
                               data$chan_info$sph_phi / 180 * pi,
@@ -311,6 +323,7 @@ compute_g <- function(xyz_coords,
     g <- g + ((2 * i + 1) / (i ^ m * (i + 1) ^ m)) * poly_xy[1, , ]
   }
   g <- g / 4 / pi
+  g
 }
 
 #' Compute the h function for two sets of locations of channel locations on the
@@ -350,4 +363,5 @@ compute_h <- function(xyz_coords,
   }
 
   h <- -h / 4 / pi
+  h
 }
