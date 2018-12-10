@@ -12,6 +12,7 @@ import_chans <- function(file_name) {
   } else {
     stop("File type ", file_type, " is unknown.")
   }
+  chan_locs
 }
 
 #' Import ASA .elc electrode location files
@@ -58,8 +59,6 @@ import_elc <- function(file_name) {
                       topo_norm(final_locs$angle,
                                 final_locs$radius))
 
-  #final_locs$x <- final_locs$radius * cos(final_locs$angle / 180 * pi)
-  #final_locs$y <- final_locs$radius * sin(-final_locs$angle / 180 * pi)
   tibble::as.tibble(final_locs)
 }
 
@@ -359,9 +358,9 @@ electrode_locations.eeg_data <- function(data,
     p <- ggplot2::ggplot(data$chan_info, aes(x, y)) +
       geom_label(aes(label = electrode))
     return(p)
-  } else {
-    return(data)
   }
+  data$chan_info <- validate_channels(data)
+  data
 }
 
 #' Plot electrode locations
@@ -469,48 +468,77 @@ montage_check <- function(montage) {
   elocs
 }
 
-
-#' Create chan_info structure
+#' Chan_info checker
 #'
-#' @param chans Channel numbers
-#' @param elecs Electrode names
-#' @noRd
+#' Checks for any missing channels in the chan_info; populates them with NA if
+#' it finds any
+#'
+#' @param .data an eeg_* object
+#' @keywords internal
+validate_channels <- function(.data) {
 
-create_chans <- function(chans, elecs) {
-  stopifnot(is.numeric(chans),
-            is.character(elecs))
-  data.frame(chan_no = chans,
-             electrode = elecs)
-
-}
-
-empty_chans <- function() {
-  data.frame(electrode = character(),
-             cart_x = numeric(),
-             cart_y = numeric(),
-             cart_z = numeric(),
-             sph_radius = numeric(),
-             sph_ph = numeric(),
-             sph_theta = numeric(),
-             pol_theta = numeric(),
-             pol_radius = numeric(),
-             angle = numeric(),
-             radius = numeric(),
-             x = numeric(),
-             y = numeric())
+  sig_names <- names(.data$signals)
+  missing_sigs <- !(sig_names %in% .data$chan_info$electrode)
+  if (any(missing_sigs)) {
+    .data$chan_info <- merge(data.frame(electrode = sig_names),
+                           .data$chan_info, all.x = TRUE)
+  }
+  .data$chan_info
 }
 
 
-bids_channels <- function(.data) {
-  tibble::tibble(name = names(.data$signals),
-                 type = character(),
-                 units = character(),
-                 description = character(),
-                 sampling_frequency = .data$srate,
-                 reference = character(),
-                 low_cutoff = 0,
-                 high_cutoff = Inf,
-                 status = character(),
-                 status_description = character()
-                 )
+channels <- function(.data, value) {
+  UseMethod("channels", .data)
+}
+
+channels.eeg_epochs <- function(.data, value) {
+  .data$chan_info
+}
+
+channels.eeg_tfr <- function(.data, value) {
+  .data$chan_info
+}
+
+channels.eeg_data <- function(.data, value) {
+  .data$chan_info
+}
+
+`channels<-` <- function(.data, value) {
+  UseMethod("channels<-", .data)
+}
+
+`channels<-.eeg_epochs` <- function(.data, value) {
+  .data$chan_info <- value
+  .data
+}
+
+`channels<-.eeg_data` <- function(.data, value) {
+  .data$chan_info <- value
+  .data
+}
+
+`channels<-.eeg_tfr` <- function(.data, value) {
+  .data$chan_info <- value
+  .data
+}
+
+`channels<-.eeg_evoked` <- function(.data, value) {
+  .data$chan_info <- value
+  .data
+}
+
+
+norm_sphere <- function(xyz_coords) {
+
+  circ <- sqrt(rowSums(xyz_coords ^ 2))
+  xyz_coords <- xyz_coords / circ
+  xyz_coords
+}
+
+cart_to <- function(xyz_norm) {
+
+  radius <- sqrt(rowSums(xyz_coords ^ 2))
+  theta <- atan(xyz_coords$cart_y / xyz_coords$cart_x)
+  phi <- acos(xyz_coords$cart_z / radius)
+  data.frame(radius, theta, phi)
 }
