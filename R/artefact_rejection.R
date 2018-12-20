@@ -165,30 +165,9 @@ faster_epochs <- function(.data, ...) {
   epoch_range <- .data[, lapply(.SD, function(x) max(x) - min(x)),
                           .SDcols = chans,
                           by = epoch]
-  # epoch_range <- lapply(.data$signals,
-  #                       function(x) diff(apply(x,
-  #                                              2,
-                                               # range)))
-  #DT  - [, lapply(.SD, function(x) max(x) - min(x)), by = data$timings$epoch]
-
-  # epoch_range <- rowMeans(do.call(rbind,
-  #                                 epoch_range))
   epoch_range <- epoch_range[, .(Mean = rowMeans(.SD)), by = epoch]
   epoch_range <- abs(scale(epoch_range$Mean)) > 3
-  #epooch_range <- abs(scale(epoch_range)) > 3
-  # epoch_range <- abs(scale(do.call("rbind",
-  #                                  epoch_range))) > 3
-  # epoch_diffs <- lapply(.data$signals,
-  #                       function(x) {
-  #                         apply(abs(sweep(x,
-  #                                         2,
-  #                                         chan_means)),
-  #                               2,
-  #                               mean)
-  #                         })
-  # #
-  # epoch_diffs <- rowMeans(do.call(rbind,
-  #                                 epoch_diffs))
+
   epoch_diffs <- .data[, lapply(.SD, mean),
                        .SDcols = chans,
                        by = epoch][, lapply(.SD, function(x) x - mean(x)),
@@ -196,12 +175,6 @@ faster_epochs <- function(.data, ...) {
                                                      .(Mean = rowMeans(.SD))]
   epoch_diffs <- abs(scale(epoch_diffs$Mean)) > 3
 
-  #epoch_vars <- lapply(.data$signals,
-   #                    function(x) apply(x,
-    #                                     2,
-     #                                    stats::var))
-  #epoch_vars <- rowMeans(do.call(rbind,
-   #                              epoch_vars))
   epoch_vars <- .data[, lapply(.SD, var), .SDcols = chans,
                       by = epoch][, apply(.SD, 1, mean),
                                   .SDcols = chans]
@@ -279,15 +252,15 @@ faster_cine <- function(.data, ...) {
   epochs <- data.table::rbindlist(epochs)
   .data$signals <- as.data.frame(epochs)
   .data
-
 }
 
 #' @noRd
 interp_weights <- function(xyz_coords, x) {
 
-  rads <- sqrt(rowSums(xyz_coords[, c("cart_x", "cart_y", "cart_z")] ^ 2))
-  xyz_coords[, c("cart_x", "cart_y", "cart_z")] <-
-    xyz_coords[, c("cart_x", "cart_y", "cart_z")] / rads
+  xyz_coords <- norm_sphere(xyz_coords)
+  # rads <- sqrt(rowSums(xyz_coords[, c("cart_x", "cart_y", "cart_z")] ^ 2))
+  # xyz_coords[, c("cart_x", "cart_y", "cart_z")] <-
+  #   xyz_coords[, c("cart_x", "cart_y", "cart_z")] / rads
 
   bad_coords <- xyz_coords[xyz_coords$electrode %in% x, ]
 
@@ -398,8 +371,6 @@ eeg_ar_thresh.eeg_epochs <- function(data, threshold, reject = FALSE, ...) {
   crossed_thresh <- rowSums(crossed_thresh) == 1
   rej_epochs <- unique(data$timings$epoch[crossed_thresh])
   if (reject) {
-    # crossed_thresh <- rowSums(crossed_thresh) == 1
-    # rej_epochs <- unique(data$timings$epoch[crossed_thresh])
     data <- select_epochs(data, rej_epochs, keep = FALSE)
     # consider creating select_timerange vs select_timepoints
   } else {
@@ -462,8 +433,6 @@ epoch_stats.eeg_epochs <- function(data, ...) {
   epoch_kur <- data[, lapply(.SD, kurtosis), by = epoch]
   epoch_max <- data[, lapply(.SD, max), by = epoch]
   epoch_min <- data[, lapply(.SD, min), by = epoch]
-  #epoch_vars <- data[, value := matrixStats::rowVars(as.matrix(.SD), na.rm = TRUE), by = epoch][, c("epoch", "value")]
-  #epoch_kur <- data[, value := kurtosis(x), by = epoch][, c("epoch", "value")]
   stats_out <- data.table::rbindlist(list(max = epoch_max,
                                           min = epoch_min,
                                           variance = epoch_vars,
