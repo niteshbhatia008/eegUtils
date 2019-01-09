@@ -76,7 +76,7 @@ import_raw <- function(file_name,
     data
   } else if (file_type == "cnt") {
     data <- import_cnt(file_name)
-    sigs <- tibble::tibble(t(data$chan_data))
+    sigs <- tibble::as.tibble(t(data$chan_data))
     names(sigs) <- data$chan_info$electrode
     srate <- data$head_info$samp_rate
     timings <- tibble::tibble(sample = 1:dim(sigs)[[1]])
@@ -89,7 +89,7 @@ import_raw <- function(file_name,
                          recording = basename(tools::file_path_sans_ext(file_name)))
     data <- eeg_data(data = sigs,
                      srate = srate,
-                     chan_info = data$chan_info,
+                     chan_info = validate_channels(data$chan_info),
                      events = event_table,
                      timings = timings,
                      continuous = TRUE,
@@ -132,8 +132,11 @@ import_cnt <- function(file_name) {
   pos <- seek(cnt_file, 864)
   n_samples <- readBin(cnt_file, integer(), size = 4, n = 1, endian = "little")
   pos <- seek(cnt_file, 886)
-  event_table_pos <- readBin(cnt_file, integer(), size = 4,
-                             n = 1, endian = "little") # event table
+  event_table_pos <- readBin(cnt_file,
+                             integer(),
+                             size = 4,
+                             n = 1,
+                             endian = "little") # event table
   pos <- seek(cnt_file, 900)
 
   data_info <- data.frame(n_events,
@@ -164,13 +167,21 @@ import_cnt <- function(file_name) {
                             n = 1, endian = "little") # y coord
 
     pos <- seek(cnt_file, chan_start + 47)
-    chan_df$baseline[i] <- readBin(cnt_file, integer(), size = 1,
-                                   n = 1, endian = "little")
+    chan_df$baseline[i] <- readBin(cnt_file,
+                                   integer(),
+                                   size = 1,
+                                   n = 1,
+                                   endian = "little")
     pos <- seek(cnt_file, chan_start + 59)
-    chan_df$sens[i] <- readBin(cnt_file, double(), size = 4, n = 1,
+    chan_df$sens[i] <- readBin(cnt_file,
+                               double(),
+                               size = 4, n = 1,
                                endian = "little")
     pos <- seek(cnt_file, chan_start + 71)
-    chan_df$cal[i] <- readBin(cnt_file, double(), size = 4, n = 1,
+    chan_df$cal[i] <- readBin(cnt_file,
+                              double(),
+                              size = 4,
+                              n = 1,
                               endian = "little")
     pos <- seek(cnt_file, (900 + i * 75))
   }
@@ -193,10 +204,21 @@ import_cnt <- function(file_name) {
 
   # Read event table
 
-  pos <- seek(cnt_file, event_table_pos)
-  teeg <- readBin(cnt_file, integer(), size = 1, n = 1, endian = "little")
-  tsize <- readBin(cnt_file, integer(), n = 1, endian = "little")
-  toffset <- readBin(cnt_file, integer(), n = 1, endian = "little")
+  pos <- seek(cnt_file,
+              event_table_pos)
+  teeg <- readBin(cnt_file,
+                  integer(),
+                  size = 1,
+                  n = 1,
+                  endian = "little")
+  tsize <- readBin(cnt_file,
+                   integer(),
+                   n = 1,
+                   endian = "little")
+  toffset <- readBin(cnt_file,
+                     integer(),
+                     n = 1,
+                     endian = "little")
   ev_table_start <- seek(cnt_file)
 
   ev_list <- data.frame(event_type = integer(n_events),
@@ -248,7 +270,7 @@ import_cnt <- function(file_name) {
               event_list = ev_list)
 }
 
-#' Function for import Brain Vision Analyzer files
+#' Function for importing Brain Vision Analyzer files
 #' @param file_name file name of the header file.
 #' @keywords internal
 import_vhdr <- function(file_name) {
@@ -358,6 +380,7 @@ read_dat <- function(file_name,
                       n = file_size,
                       size = nbytes,
                       signed = signed)
+  raw_data
 }
 
 #' Read BVA markers
