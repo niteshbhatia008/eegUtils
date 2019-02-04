@@ -53,16 +53,20 @@ plot_timecourse.data.frame <- function(data,
                                color = NULL,
                                ...) {
 
+  warning("Methods for data.frames will be deprecated soon.")
   if (!is.null(electrode)) {
-    data <- select_elecs(data, electrode)
+    data <- select_elecs(data,
+                         electrode)
   }
 
   if (!is.null(baseline)) {
-    data <- rm_baseline(data, baseline)
+    data <- rm_baseline(data,
+                        baseline)
   }
 
   if (!is.null(time_lim)) {
-    data <- select_times(data, time_lim)
+    data <- select_times(data,
+                         time_lim)
   }
 
   if (is.null(colour)) {
@@ -76,7 +80,7 @@ plot_timecourse.data.frame <- function(data,
   tc_plot <- create_tc(data,
                        add_CI = FALSE,
                        colour = colour)
-
+  tc_plot
 }
 
 #' @describeIn plot_timecourse plot \code{eeg_evoked} timecourses
@@ -257,7 +261,8 @@ parse_for_tc <- function(data,
     data <- eeg_average(data)
   }
 
-  data <- as.data.frame(data, long = TRUE)
+  data <- as.data.frame(data,
+                        long = TRUE)
 }
 
 #' Internal function for creation of timecourse plots
@@ -309,9 +314,12 @@ create_tc <- function(data,
                  geom = "line",
                  size = 1.2)
   tc_plot +
-    labs(x = "Time (s)", y = expression(paste("Amplitude (", mu, "V)")),
-         colour = "", fill = "") +
-    geom_vline(xintercept = 0, linetype = "solid", size = 0.5) +
+    labs(x = "Time (s)",
+         y = expression(paste("Amplitude (", mu, "V)")),
+         colour = "",
+         fill = "") +
+    geom_vline(xintercept = 0,
+               linetype = "solid", size = 0.5) +
     geom_hline(yintercept = 0, linetype = "solid", size = 0.5) +
     scale_x_continuous(breaks = scales::pretty_breaks(n = 4),
                        expand = c(0, 0)) +
@@ -369,19 +377,24 @@ plot_butterfly.default <- function(data,
                            ...) {
 
   if (browse_mode == FALSE && is.null(facet)) {
-    data <- dplyr::group_by(data, time, electrode)
-    data <- dplyr::summarise(data, amplitude = mean(amplitude))
+    data <- dplyr::group_by(data,
+                            time,
+                            electrode)
+    data <- dplyr::summarise(data,
+                             amplitude = mean(amplitude))
     data <- dplyr::ungroup(data)
   }
 
   ## select time-range of interest -------------
 
   if (!is.null(time_lim)) {
-    data <- select_times(data, time_lim)
+    data <- select_times(data,
+                         time_lim)
   }
 
   if (!is.null(baseline)) {
-    data <- rm_baseline(data, baseline)
+    data <- rm_baseline(data,
+                        baseline)
   }
 
   #Set up basic plot -----------
@@ -455,7 +468,6 @@ plot_butterfly.eeg_stats <- function(data,
                  browse_mode)
 
 }
-
 
 #' @describeIn plot_butterfly Create butterfly plot for \code{eeg_data} objects
 #' @export

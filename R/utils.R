@@ -314,10 +314,6 @@ label_check <- function(cond_labs,
       }
 }
 
-
-
-
-
 #' Convert to 3d matrix
 #'
 #' @param data data to be converted
@@ -363,7 +359,6 @@ zero_vec <- function(vec_length) {
 #' @param x vector to pad
 #' @param n number of zeros to pad
 #' @keywords internal
-
 pad <- function(x, n) {x <- c(rep(0, n), x, rep(0, n))}
 
 #' Unpad a vector
@@ -379,7 +374,6 @@ unpad <- function(x, n) {
   x
 }
 
-
 #' Fix group delay
 #'
 #' Corrects a signal for the group delay of an FIR filter.
@@ -390,4 +384,11 @@ fix_grpdelay <- function(x, n, grp_delay) {
   end <- length(x) - n + grp_delay
   x <- x[start:end]
   x
+}
+
+#' Get number of samples
+#' @param .data Object to get total number of sampling points from
+#' @keywords internal
+samples <- function(.data) {
+  nrow(.data$signals)
 }
