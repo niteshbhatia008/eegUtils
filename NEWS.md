@@ -1,6 +1,10 @@
 # eegUtils 0.3.0.9000
 
 ### Function changes
+- Behaviour of `as.data.frame` methods changed.
+    - `cond_label` parameter is deprecated
+    - Information from the new `epochs` structure is now automatically added to the data.frame
+- `tag_epochs`
 - Behaviour of `select_times()` changed to use exact supplied times rather than finding nearest times in the data.
 - Some wrappers around `dplyr` functions added:
     - `select()` now works for selecting electrodes from `eeg_data` and `eeg_epochs` objects.
@@ -14,6 +18,8 @@
 - `eeg_filter()` function added for a unified method of filtering using either FIR or IIR
     - `eeg_filter()` supports use of multiple threads/cores through the `future` package.
     - `iir_filt()` will be deprecated
+- `geom_topo()` extension for `ggplot2` added. Allows plotting of a topographical scalp maps using standard `ggplot2` functions.
+- Default `grid_res` for topography related plots increased to 300.
 
 ### Internal changes / bug fixes
 - `data.table` now used in the following functions internally:

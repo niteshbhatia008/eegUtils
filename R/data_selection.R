@@ -101,8 +101,6 @@ select_times.eeg_evoked <- function(data,
                                     df_out = FALSE,
                                     ...) {
 
-  #data$signals <- as.data.frame(data)
-
   keep_rows <- find_times(data$timings,
                           time_lim)
 
@@ -112,7 +110,6 @@ select_times.eeg_evoked <- function(data,
   if (df_out) {
     return(data$signals)
   }
-  #data$signals$time <- NULL
   data
 }
 
@@ -386,17 +383,6 @@ select_epochs.default <- function(data, ...) {
                 "and can only be used on eeg_epochs objects."))
 }
 
-#' @describeIn select_epochs Select epochs from \code{eeg_data} objects.
-#' @export
-
-select_epochs.eeg_data <- function(data, ...) {
-  if (data$continuous) {
-    stop("Data is not epoched.")
-  } else {
-    warning("oops, shouldn't end up here.")
-  }
-}
-
 #' @param epoch_events Select epochs containing any of the specified events. Can
 #'   be numeric or a character string. Will override any epoch_no input.
 #' @param epoch_no Select epochs by epoch number.
@@ -424,6 +410,7 @@ select_epochs.eeg_epochs <- function(data,
                             event_labels = data$events$event_label,
                             keep = keep)
   }
+
   if (is.numeric(epoch_no)) {
     if (keep == FALSE) {
       orig_epo_no <- unique(data$timings$epoch)
@@ -433,6 +420,11 @@ select_epochs.eeg_epochs <- function(data,
     data$signals <- data$signals[keep_rows, ]
     data$timings <- data$timings[keep_rows, ]
     data$events <- data$events[data$events$epoch %in% epoch_no, ]
+    if (!is.null(data$epochs)) {
+      data$epochs <- data$epochs[data$epochs$epoch %in% epoch_no, ]
+    } else {
+      warning("Epoch structure missing; update your eeg_epochs object using update_eeg_epochs.")
+    }
   }
   if (df_out) {
     return(as.data.frame(data))
@@ -470,6 +462,11 @@ select_epochs.eeg_ICA <- function(data,
     data$comp_activations <- data$comp_activations[keep_rows, ]
     data$timings <- data$timings[keep_rows, ]
     data$events <- data$events[data$events$epoch %in% epoch_no, ]
+    if (!is.null(data$epochs)) {
+      data$epochs <- data$epochs[data$epochs$epoch %in% epoch_no, ]
+    } else {
+      warning("Epoch structure missing; update your eeg_ICA object using update_eeg_epochs.")
+    }
   }
   if (df_out) {
     return(as.data.frame(data))

@@ -7,90 +7,59 @@
 #' @author Matt craddock \email{matt@@mattcraddock.com}
 #' @export
 
-eeg_average <- function(data, ...) {
+eeg_average <- function(data,
+                        ...) {
   UseMethod("eeg_average", data)
 }
 
 #' @describeIn eeg_average Default method for averaging EEG objects
 #' @export
 
-eeg_average.default <- function(data, ...) {
+eeg_average.default <- function(data,
+                                ...) {
   stop("eeg_epochs or eeg_tfr object required as input.")
 }
 
-#' @param cond_label Only pick events that include a given label. Character
-#'   vector.
-#' @param calc_var Can be used to calculate measures of variability around the
-#'   average.
 #' @describeIn eeg_average Create evoked data from \code{eeg_epochs}
+#' @importFrom tibble tibble
+#' @importFrom dplyr left_join group_by_at summarise_at ungroup
 #' @export
 eeg_average.eeg_epochs <- function(data,
-                                   cond_label = NULL,
-                                   calc_var = NULL, ...) {
+                                   ...) {
 
-  if (is.null(cond_label)) {
+  elecs <- channel_names(data)
 
-    n_times <- length(unique(data$timings$time))
-    n_epochs <- length(unique(data$timings$epoch))
-    orig_elecs <- names(data$signals)
-    data$signals <- as.matrix(data$signals)
-    dim(data$signals) <- c(n_times,
-                           n_epochs,
-                           ncol(data$signals))
-    data$signals <- base::colMeans(base::aperm(data$signals, c(2, 1, 3)))
-    data$signals <- as.data.frame(data$signals)
-    names(data$signals) <- orig_elecs
-
-    if (!is.null(calc_var) && calc_var == "SE") {
-      data_sd <- lapply(data$signals,
-                        function(x) matrixStats::colSds(as.matrix(x)) / sqrt(nrow(x)))
-      data_sd <- as.data.frame(do.call("rbind", data_sd))
-      names(data_sd) <- names(data$signals)
-      data$var <- data_sd
-    }
-
-  } else {
-
-    # Check for presence of labels
-    lab_check <- label_check(cond_label,
-                             unique(list_epochs(data)$event_label))
-
-    if (!all(lab_check)) {
-      stop("Not all labels found. Use list_events to check labels.")
-    }
-
-    evoked <- vector("list", length(cond_label))
-
-    for (i in seq_along(cond_label)) {
-      tmp_dat <- select_epochs(data,
-                               epoch_events = cond_label[[i]])
-      tmp_dat$signals <- split(tmp_dat$signals,
-                               tmp_dat$timings$time)
-      tmp_dat$signals <- lapply(tmp_dat$signals,
-                                colMeans)
-      evoked[[i]] <- as.data.frame(do.call("rbind",
-                                           tmp_dat$signals))
-      row.names(evoked[[i]]) <- NULL
-    }
-    data$signals <- evoked
-
-    if (length(cond_label) > 1) {
-      names(data$signals) <- cond_label
-    } else {
-      data$signals <- data$signals[[1]]
-    }
+  if (is.null(data$epochs)) {
+    data$epochs <- tibble::tibble(epoch = unique(data$timings$epoch),
+                                  recording = NA)
   }
-  data$events <- NULL
-  data$timings <- unique(data$timings["time"])
-  class(data) <- c("eeg_evoked")
+
+  data$signals <- dplyr::left_join(cbind(data$signals,
+                                         data$timings),
+                                   data$epochs, by = "epoch")
+  col_names <- names(data$epochs)
+  col_names <- col_names[!(col_names %in% c("epoch", "recording"))]
+
+  data$signals <-
+    dplyr::group_by_at(data$signals,
+                       .vars = vars(time, col_names)) %>%
+    dplyr::summarise_at(.vars = vars(elecs),
+                        mean) %>%
+    dplyr::ungroup()
+
+  data <-
+    eeg_evoked(data = data$signals[, elecs],
+               chan_info = data$chan_info,
+               srate = data$srate,
+               timings = data$signals[, c("time", col_names)],
+               epochs = NULL)
   data
 }
 
 #' @describeIn eeg_average average an eeg_tfr objects over epochs.
 #' @export
 eeg_average.eeg_tfr <- function(data,
-                                cond_label = NULL,
-                                calc_var = NULL, ...) {
+                                ...) {
   if (!"epoch" %in% data$dimensions) {
     #message("Data is already averaged.")
   } else {
@@ -177,7 +146,8 @@ create_grandavg <- function(data,
 
 #' Check that all classes in a list match
 #'
-#' @noRd
+#' @param data list of objects to check
+#' @keywords internal
 
 check_classes <- function(data) {
 

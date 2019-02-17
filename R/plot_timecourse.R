@@ -33,27 +33,29 @@ plot_timecourse.default <- function(data,
 #'  between-subject CIs.
 #'@param time_lim Character vector. Numbers in whatever time unit is used
 #'  specifying beginning and end of time-range to plot. e.g. c(-.1, .3)
+#'@param facet Deprecated. Please use standard ggplot2 facetting functions.
 #'@param baseline Character vector. Times to use as a baseline. Takes the mean
 #'  over the specified period and subtracts. e.g. c(-.1,0)
 #'@param colour Variable to colour lines by. If no variable is passed, only one
 #'  line is drawn.
 #'@param color Alias for colour.
-#'@param group (not yet implemented)
-#'@param facet Create multiple plots for a specified grouping variable.
 #'@describeIn plot_timecourse Plot a data.frame timecourse
 #'@export
 plot_timecourse.data.frame <- function(data,
                                electrode = NULL,
                                time_lim = NULL,
-                               group = NULL,
-                               facet = NULL,
+                               facet,
                                add_CI = FALSE,
                                baseline = NULL,
                                colour = NULL,
                                color = NULL,
                                ...) {
 
-  warning("Methods for data.frames will be deprecated soon.")
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
+
   if (!is.null(electrode)) {
     data <- select_elecs(data,
                          electrode)
@@ -88,13 +90,17 @@ plot_timecourse.data.frame <- function(data,
 plot_timecourse.eeg_evoked <- function(data,
                                electrode = NULL,
                                time_lim = NULL,
-                               group = NULL,
-                               facet = NULL,
+                               facet,
                                add_CI = FALSE,
                                baseline = NULL,
                                colour = NULL,
                                color = NULL,
                                ...) {
+
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
 
   if (add_CI) {
     warning("Cannot add_CI for eeg_evoked objects.")
@@ -128,13 +134,17 @@ plot_timecourse.eeg_evoked <- function(data,
 plot_timecourse.eeg_ICA <- function(data,
                             component = NULL,
                             time_lim = NULL,
-                            group = NULL,
-                            facet = NULL,
+                            facet,
                             add_CI = FALSE,
                             baseline = NULL,
                             colour = NULL,
                             color = NULL,
                             ...) {
+
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
 
   # Select specifed times
   if (!is.null(time_lim)) {
@@ -168,7 +178,7 @@ plot_timecourse.eeg_ICA <- function(data,
   }
 
   data <- as.data.frame(data,
-                        long = T)
+                        long = TRUE)
 
   tc_plot <- create_tc(data,
                        add_CI = add_CI,
@@ -182,12 +192,16 @@ plot_timecourse.eeg_ICA <- function(data,
 plot_timecourse.eeg_epochs <- function(data,
                                electrode = NULL,
                                time_lim = NULL,
-                               group = NULL,
-                               facet = NULL,
+                               facet,
                                add_CI = FALSE,
                                baseline = NULL,
                                colour = NULL,
                                color = NULL, ...) {
+
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
 
   data <- parse_for_tc(data,
                        time_lim = time_lim,
@@ -348,35 +362,38 @@ plot_butterfly <- function(data, ...) {
 
 #' @param time_lim Character vector. Numbers in whatever time unit is used
 #'   specifying beginning and end of time-range to plot. e.g. c(-.1,.3)
-#' @param group Group lines by a specificed grouping variable.
 #' @param baseline  Character vector. Times to use as a baseline. Takes the mean
 #'   over the specified period and subtracts. e.g. c(-.1, 0)
-#' @param facet Create multiple plots for a specified grouping variable.
 #' @param colourmap Attempt to plot using a different colourmap (from
 #'   RColorBrewer). (Not yet implemented)
 #' @param legend Plot legend or not.
+#' @param facet Deprecated. Please use standard ggplot2 facetting functions.
 #' @param continuous Is the data continuous or not (I.e. epoched)
 #' @param browse_mode Custom theme for use with browse_data.
 #' @return ggplot2 object showing ERPs for all electrodes overlaid on a single
 #'   plot.
 #' @import ggplot2
 #' @importFrom dplyr group_by ungroup summarise
-#' @import tidyr
+#' @importFrom tidyr gather
 #' @describeIn plot_butterfly Default `plot_butterfly` method for data.frames, \code{eeg_data}
 #' @export
 
 plot_butterfly.default <- function(data,
-                           time_lim = NULL,
-                           group = NULL,
-                           facet = NULL,
-                           baseline = NULL,
-                           colourmap = NULL,
-                           legend = TRUE,
-                           continuous = FALSE,
-                           browse_mode = FALSE,
-                           ...) {
+                                   time_lim = NULL,
+                                   baseline = NULL,
+                                   colourmap = NULL,
+                                   legend = TRUE,
+                                   continuous = FALSE,
+                                   browse_mode = FALSE,
+                                   facet,
+                                   ...) {
 
-  if (browse_mode == FALSE && is.null(facet)) {
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
+
+  if (browse_mode == FALSE) {
     data <- dplyr::group_by(data,
                             time,
                             electrode)
@@ -408,32 +425,24 @@ plot_butterfly.default <- function(data,
 #' @export
 plot_butterfly.eeg_evoked <- function(data,
                                       time_lim = NULL,
-                                      group = NULL,
-                                      facet = NULL,
                                       baseline = NULL,
                                       colourmap = NULL,
                                       legend = TRUE,
                                       continuous = FALSE,
                                       browse_mode = FALSE,
+                                      facet,
                                       ...) {
 
-  if (identical(class(data$signals), "list")) {
-    time_vec <- data$timings$time
-    data <- Reduce("+", data$signals) / length(data$signals)
-    data$time <- time_vec
-    data <- tidyr::gather(data,
-                          electrode,
-                          amplitude,
-                          -time,
-                          factor_key = T)
-  } else {
-    data <- as.data.frame(data, long = TRUE)
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
   }
+
+  data <- as.data.frame(data,
+                        long = TRUE)
 
   plot_butterfly(data,
                  time_lim,
-                 group,
-                 facet,
                  baseline,
                  colourmap,
                  legend,
@@ -445,8 +454,6 @@ plot_butterfly.eeg_evoked <- function(data,
 
 plot_butterfly.eeg_stats <- function(data,
                                      time_lim = NULL,
-                                     group = NULL,
-                                     facet = NULL,
                                      baseline = NULL,
                                      colourmap = NULL,
                                      legend = TRUE,
@@ -456,11 +463,13 @@ plot_butterfly.eeg_stats <- function(data,
 
   data <- data.frame(data$statistic,
                      time = data$timings)
-  data <- tidyr::gather(data, key = "electrode", value = "amplitude", -time)
+  data <- tidyr::gather(data,
+                        key = "electrode",
+                        value = "amplitude",
+                        -time)
 
-  plot_butterfly(data, time_lim,
-                 group,
-                 facet,
+  plot_butterfly(data,
+                 time_lim,
                  baseline,
                  colourmap,
                  legend,
@@ -475,8 +484,14 @@ plot_butterfly.eeg_data <- function(data,
                              time_lim = NULL,
                              baseline = NULL,
                              legend = TRUE,
+                             facet,
                              browse_mode = FALSE,
                              ...) {
+
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
 
   data <- parse_for_bf(data,
                        time_lim,
@@ -493,8 +508,14 @@ plot_butterfly.eeg_epochs <- function(data,
                                time_lim = NULL,
                                baseline = NULL,
                                legend = TRUE,
+                               facet,
                                browse_mode = FALSE,
                                ...) {
+
+  if (!missing(facet)) {
+    warning("The facet parameter is deprecated. Please use facet_wrap/facet_grid")
+    facet <- NULL
+  }
 
   data <- eeg_average(data)
   data <- parse_for_bf(data,
@@ -531,7 +552,8 @@ parse_for_bf <- function(data,
                         time_lim = baseline)
   }
   data <- as.data.frame(data,
-                        long = TRUE)
+                        long = TRUE,
+                        coords = FALSE)
   data
 }
 
@@ -540,7 +562,6 @@ parse_for_bf <- function(data,
 create_bf <- function(data,
                       legend,
                       browse_mode,
-                      facet = FALSE,
                       continuous) {
 
   #Set up basic plot -----------
@@ -550,9 +571,11 @@ create_bf <- function(data,
 
   if (browse_mode) {
     butterfly_plot <- butterfly_plot +
-      geom_line(aes(group = electrode),
-                colour = "black",
-                alpha = 0.2) +
+      stat_summary(geom = "line",
+                   fun.y = mean,
+                   aes(group = electrode),
+                   colour = "black",
+                   alpha = 0.2) +
       labs(x = "Time (s)",
            y = expression(paste("Amplitude (", mu, "V)")),
            colour = "") +
@@ -565,9 +588,12 @@ create_bf <- function(data,
       theme(panel.grid = element_blank(),
             axis.ticks = element_line(size = .5))
   } else {
-    butterfly_plot <- butterfly_plot +
-      geom_line(aes(group = electrode,
-                    colour = electrode),
+    butterfly_plot <-
+      butterfly_plot +
+      stat_summary(geom = "line",
+                   fun.y = mean,
+                   aes(group = electrode,
+                       colour = electrode),
                 alpha = 0.5) +
       labs(x = "Time (s)",
            y = expression(paste("Amplitude (", mu, "V)")),
@@ -579,13 +605,9 @@ create_bf <- function(data,
             axis.ticks = element_line(size = .5))
 
     if (!continuous) {
-      butterfly_plot <- butterfly_plot +
+      butterfly_plot <-
+        butterfly_plot +
         geom_vline(xintercept = 0, size = 0.5)
-    }
-
-    if (!is.null(facet)) {
-      butterfly_plot +
-        facet_wrap(facet)
     }
   }
 

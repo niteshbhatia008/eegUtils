@@ -13,13 +13,13 @@
 #' EEG artifact Rejection. J Neurosci Methods.
 #' @export
 
-eeg_FASTER <- function(.data) {
-  UseMethod("eeg_FASTER", .data)
+ar_FASTER <- function(.data, ...) {
+  UseMethod("ar_FASTER", .data)
 }
 
-#' @describeIn eeg_FASTER Run FASTER on \code{eeg_epochs}
+#' @describeIn ar_FASTER Run FASTER on \code{eeg_epochs}
 #' @export
-eeg_FASTER.eeg_epochs <- function(.data, ...) {
+ar_FASTER.eeg_epochs <- function(.data, ...) {
 
   check_ci_str(.data$chan_info)
 
@@ -42,9 +42,9 @@ eeg_FASTER.eeg_epochs <- function(.data, ...) {
   # Note - should allow user to specify in case Fz is a known bad electrode.
 
   # if ("Fz" %in% names(data$signals)) {
-  #   data <- reref_eeg(data, ref_chans = "Fz", exclude = excluded)
+  #   data <- eeg_reference(data, ref_chans = "Fz", exclude = excluded)
   # } else {
-  #   data <- reref_eeg(data, ref_chans = names(data$signals)[14], exclude = excluded)
+  #   data <- eeg_reference(data, ref_chans = names(data$signals)[14], exclude = excluded)
   # }
 
   orig_names <- names(.data$signals)
@@ -116,9 +116,9 @@ eeg_FASTER.eeg_epochs <- function(.data, ...) {
 
   # Return to original reference, if one existed.
   if (!is.null(orig_ref)) {
-    .data <- reref_eeg(.data,
-                      ref_chans = orig_ref,
-                      exclude = excluded)
+    .data <- eeg_reference(.data,
+                           ref_chans = orig_ref,
+                           exclude = excluded)
   }
 
   .data$chan_info <- orig_chan_info
@@ -259,9 +259,6 @@ interp_weights <- function(xyz_coords, x) {
 
   xyz_coords[, c("cart_x", "cart_y", "cart_z")] <-
     norm_sphere(xyz_coords[, c("cart_x", "cart_y", "cart_z")])
-  # rads <- sqrt(rowSums(xyz_coords[, c("cart_x", "cart_y", "cart_z")] ^ 2))
-  # xyz_coords[, c("cart_x", "cart_y", "cart_z")] <-
-  #   xyz_coords[, c("cart_x", "cart_y", "cart_z")] / rads
 
   bad_coords <- xyz_coords[xyz_coords$electrode %in% x, ]
 
@@ -471,11 +468,10 @@ kurtosis <- function(data) {
 #' @export
 
 ar_eogreg <- function(.data,
-                          heog,
-                          veog,
-                          bipolarize = TRUE) {
+                      heog,
+                      veog,
+                      bipolarize = TRUE) {
   UseMethod("ar_eogreg", .data)
-
 }
 
 #' @rdname ar_eogreg
