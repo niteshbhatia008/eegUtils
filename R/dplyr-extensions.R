@@ -25,6 +25,7 @@ filter.eeg_epochs <- function(.data,
     warning("Epochs structure missing; Update your eeg_epochs object using update_eeg_epochs.")
     return(.data)
   }
+
   epo_args <- grepl(paste(names(.data$epochs), collapse = "|"),
                     unlist(args))
   if (any(epo_args)) {
@@ -83,6 +84,18 @@ select.eeg_data <- function(.data, ...) {
   .data
 }
 
+#' @importFrom dplyr select filter
+#' @export
+select.eeg_ICA <- function(.data, ...) {
+  .data$signals <- dplyr::select(.data$signals, ...)
+  .data$mixing_matrix <- dplyr::select(.data$mixing_matrix, ..., electrode)
+  .data$unmixing_matrix <- dplyr::select(.data$unmixing_matrix, ..., electrode)
+  if (!is.null(.data$chan_info)) {
+    .data$chan_info <- .data$chan_info[.data$chan_info$electrode %in% .data$mixing_matrix$electrode, ]
+  }
+  .data
+}
+
 #' @importFrom dplyr mutate
 #' @export
 dplyr::mutate
@@ -101,5 +114,3 @@ mutate.eeg_epochs <- function(.data, ...) {
   .data$signals <- dplyr::mutate(.data$signals, ...)
   .data
 }
-
-

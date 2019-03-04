@@ -1,6 +1,7 @@
 #' Calculate averages (e.g. ERPs) for single datasets
 #'
-#' This function is used to create an \code{eeg_evoked} object from \code{eeg_epochs}.
+#' This function is used to create an \code{eeg_evoked} object from
+#' \code{eeg_epochs}.
 #'
 #' @param data An \code{eeg_epochs} object.
 #' @param ... Other arguments passed to the averaging functions
@@ -23,49 +24,110 @@ eeg_average.default <- function(data,
 #' @describeIn eeg_average Create evoked data from \code{eeg_epochs}
 #' @importFrom tibble tibble
 #' @importFrom dplyr left_join group_by_at summarise_at ungroup
+#' @param cols Columns from the \code{epochs} structure that the average should
+#'   group on. NULL, the default, uses all columns other than the \code{epoch}
+#'   column.
 #' @export
 eeg_average.eeg_epochs <- function(data,
+                                   cols = NULL,
                                    ...) {
 
   elecs <- channel_names(data)
 
   if (is.null(data$epochs)) {
-    data$epochs <- tibble::tibble(epoch = unique(data$timings$epoch),
-                                  recording = NA)
+    tibble::new_tibble(list(epoch = 1,
+                            participant_id = character(1),
+                            recording = character(1)),
+                       nrow = 1,
+                       class = "epoch_info")
   }
 
   data$signals <- dplyr::left_join(cbind(data$signals,
                                          data$timings),
                                    data$epochs, by = "epoch")
-  col_names <- names(data$epochs)
-  col_names <- col_names[!(col_names %in% c("epoch", "recording"))]
+
+  if (!is.null(cols)) {
+    if ("participant_id" %in% cols) {
+      col_names <- cols
+    } else {
+      col_names <- c("participant_id", cols)
+    }
+  } else {
+    col_names <- names(data$epochs)
+    col_names <- col_names[!(col_names %in% c("epoch"))]
+  }
 
   data$signals <-
     dplyr::group_by_at(data$signals,
                        .vars = vars(time, col_names)) %>%
     dplyr::summarise_at(.vars = vars(elecs),
                         mean) %>%
+    dplyr::group_by_at(.vars = col_names) %>%
+    dplyr::mutate(epoch = dplyr::group_indices()) %>%
     dplyr::ungroup()
+
+  timings <- data$signals[, c("time", "epoch", col_names)]
+
+  epochs <- dplyr::select(timings,
+                          epoch,
+                          !!col_names) %>%
+    dplyr::distinct()
+
+  class(epochs) <- c("epoch_info", "tbl_df", "tbl", "data.frame")
 
   data <-
     eeg_evoked(data = data$signals[, elecs],
                chan_info = data$chan_info,
                srate = data$srate,
-               timings = data$signals[, c("time", col_names)],
-               epochs = NULL)
+               timings = timings,
+               epochs = epochs)
   data
 }
 
 #' @describeIn eeg_average average an eeg_tfr objects over epochs.
 #' @export
 eeg_average.eeg_tfr <- function(data,
+                                cols = NULL,
                                 ...) {
   if (!"epoch" %in% data$dimensions) {
-    #message("Data is already averaged.")
+    message("Data is already averaged.")
   } else {
+    orig_names <- dimnames(data$signals)
     data <- average_tf(data)
+    #dimnames(data$signals) <- corig_names[1:3]
     data$dimensions <- data$dimensions[-which(data$dimensions == "epoch")]
   }
+  data
+}
+
+
+#' Internal function for averaging over epochs for eeg_tfr objects.
+#' @param data data to average over
+#' @keywords internal
+average_tf <- function(data) {
+
+  # Need to find a way to make this respect epochs structure...
+  orig_dims <- dimnames(data$signals)
+
+  if (data$freq_info$output == "phase") {
+    data$signals <- apply(data$signals,
+                          c(2, 3, 4),
+                          circ_mean)
+
+  } else {
+    avg_tf <- array(0, dim = dim(data$signals)[2:4])
+    for (iz in 1:dim(data$signals)[3]) {
+      for (ij in 1:dim(data$signals)[4]) {
+        avg_tf[, iz, ij] <- colMeans(data$signals[ , , iz, ij, drop = FALSE])
+      }
+    }
+
+    data$signals <- avg_tf
+    dimnames(data$signals) <- orig_dims[2:4]
+    cols <- c("epoch", "participant_id", "recording")
+    data$epochs <- data$epochs[1, colnames(data$epochs) %in% cols]
+  }
+  data$timings <- dplyr::filter(data$timings, epoch == 1)
   data
 }
 
