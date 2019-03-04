@@ -102,6 +102,7 @@ compute_psd.eeg_epochs <- function(data,
   if (is.null(seg_length)) {
     seg_length <- n_fft
   }
+
   if (seg_length > n_fft) {
     stop("seg_length cannot be greater than n_fft")
   }
@@ -147,9 +148,11 @@ compute_psd.eeg_evoked <- function(data,
                                    ...) {
   data <- rm_baseline(data)
   srate <- data$srate
+
   if (is.null(seg_length)) {
     seg_length <- n_fft
   }
+
   if (seg_length > n_fft) {
     stop("seg_length cannot be greater than n_fft")
   }
@@ -158,7 +161,8 @@ compute_psd.eeg_evoked <- function(data,
   if (n_times < seg_length) {
     seg_length <- n_times
   }
-  if (noverlap == 0) {
+
+  if (is.null(noverlap)) {
     noverlap <- seg_length %/% 8
   } else if (noverlap >= seg_length) {
     stop("noverlap should not be larger than seg_length.")
@@ -463,7 +467,6 @@ tf_morlet <- function(data,
   mf_zp <- fft_n(morlet_family,
                  n_conv)
 
-
   # Normalise wavelets for FFT (as suggested by Mike X. Cohen):
   norm_mf <- wavelet_norm(mf_zp,
                           n_freq)
@@ -482,7 +485,8 @@ tf_morlet <- function(data,
                  sigtime,
                  data$srate),
         output)
-    trial_dat[time_sel, , , drop = FALSE]
+    trial_dat <- trial_dat[time_sel, , , drop = FALSE]
+    trial_dat
   }
 
   data$signals <- lapply(data$signals,
@@ -511,15 +515,17 @@ tf_morlet <- function(data,
   edge_mat <- remove_edges(sigtime,
                            data$freq_info$morlet_resolution$sigma_t)
 
+  dimnames(data$signals) <- list(epoch = unique(data$timings$epoch),
+                                 time = sigtime,
+                                 electrode = elecs,
+                                 frequency = data$freq_info$freqs
+  )
+
   if (keep_trials) {
-    data$signals <- aperm(data$signals,
-                          c(2, 3, 4, 1))
-    dimnames(data$signals) <- list(sigtime,
-                                   elecs,
-                                   data$freq_info$freqs,
-                                   unique(data$timings$epoch))
+
+
     data$signals <- sweep(data$signals,
-                          c(1, 3),
+                          c(2, 4),
                           edge_mat,
                           "*")
     data <- eeg_tfr(data$signals,
@@ -529,10 +535,7 @@ tf_morlet <- function(data,
                     reference = data$reference,
                     timings = data$timings,
                     freq_info = data$freq_info,
-                    dimensions = c("time",
-                                   "electrode",
-                                   "frequency",
-                                   "epoch"),
+                    dimensions = names(dimnames(data$signals)),
                     epochs = data$epochs)
     return(data)
   }
@@ -540,9 +543,6 @@ tf_morlet <- function(data,
 
   data <- average_tf(data)
 
-  dimnames(data$signals) <- list(sigtime,
-                                 elecs,
-                                 data$freq_info$freqs)
   data$signals <- sweep(data$signals,
                         c(1, 3),
                         edge_mat,
@@ -736,7 +736,7 @@ circ_mean <- function(data) {
 
 #' Convert Fourier output to power or phase as requested.
 #'
-#' @param data Fourier coefficients from from eeg_tfr
+#' @param data Fourier coefficients from eeg_tfr
 #' @param output What output is desired - "power", "phase" or "fourier"
 #' @keywords internal
 convert_tfr <- function(data, output) {
@@ -774,23 +774,3 @@ wavelet_norm <- function(mf_zp, n_freq) {
                     ncol = n_freq)
 }
 
-#' Internal function for averaging over epochs
-#' @param data data to average over
-#' @keywords internal
-average_tf <- function(data) {
-
-  if (data$freq_info$output == "phase") {
-    data$signals <- apply(data$signals,
-                          c(1, 2, 3),
-                          circ_mean)
-  } else {
-    avg_tf <- array(0, dim = dim(data$signals)[2:4])
-    for (iz in 1:dim(data$signals)[3]) {
-      for (ij in 1:dim(data$signals)[4]) {
-        avg_tf[, iz, ij] <- colMeans(data$signals[ , , iz, ij, drop = FALSE])
-      }
-    }
-    data$signals <- avg_tf
-  }
-  data
-}

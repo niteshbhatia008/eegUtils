@@ -13,7 +13,8 @@ stat_scalpmap(mapping = NULL, data = NULL, position = "identity",
   grid_res = 300, interpolate = FALSE, interp_limit = "skirt", ...)
 
 geom_head(mapping = NULL, data = NULL, show.legend = NA,
-  na.rm = TRUE, inherit.aes = TRUE, interp_limit = "skirt", ...)
+  na.rm = TRUE, inherit.aes = TRUE, interp_limit = "skirt",
+  r = NULL, ...)
 
 geom_mask(mapping = NULL, data = NULL, show.legend = NA,
   na.rm = FALSE, colour = "white", size = rel(6.5),
@@ -74,6 +75,8 @@ points).}
 often aesthetics, used to set an aesthetic to a fixed value, like
 \code{colour = "red"} or \code{size = 3}. They may also be parameters
 to the paired geom/stat.}
+
+\item{r}{Radius of head}
 
 \item{colour}{For \code{geom_mask}, colour of the masking ring.}
 

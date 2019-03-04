@@ -122,6 +122,25 @@ plot_psd.data.frame <- function(data,
     xlab("Frequency (Hz)")
 }
 
+#' @describeIn plot_psd Plot PSD for \code{eeg_evoked} objects
+#' @export
+plot_psd.eeg_evoked <- function(data,
+                                freq_range = NULL,
+                                n_fft = 256,
+                                seg_length = NULL,
+                                noverlap = NULL,
+                                ...) {
+
+  psd_out <- compute_psd(data,
+                         keep_trials = FALSE,
+                         n_fft = n_fft,
+                         seg_length = seg_length,
+                         noverlap = noverlap)
+
+  create_psd_plot(psd_out,
+                  freq_range)
+}
+
 #' Create a PSD plot
 #'
 #' @param psd_out PSD to plot.
@@ -204,17 +223,14 @@ plot_tfr <- function(data,
   }
 
   if (!is.null(freq_range)) {
-    data_freqs <- as.numeric(dimnames(data$signals)[[3]])
+    data_freqs <- as.numeric(dimnames(data$signals)[["frequency"]])
     data_freqs <- (data_freqs >= freq_range[1] & data_freqs <= freq_range[2])
     data$signals <- data$signals[, , data_freqs, drop = FALSE]
   }
 
   if (length(data$dimensions) == 4) {
-    data$signals <- apply(data$signals,
-                          c(1, 2, 3),
-                          mean)
-    data$dimensions <- data$dimensions[1:3]
-  }
+    data <- eeg_average(data)
+   }
 
   if (baseline_type != "none") {
     data <- rm_baseline(data,
@@ -260,7 +276,8 @@ plot_tfr <- function(data,
            "pc" = fill_dist(),
            scale_fill_viridis_c())
 
-  data <- as.data.frame(data, long = TRUE)
+  data <- as.data.frame(data,
+                        long = TRUE)
 
   tfr_plot <-
     ggplot2::ggplot(data,

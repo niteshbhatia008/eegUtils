@@ -438,16 +438,15 @@ plot_butterfly.eeg_evoked <- function(data,
     facet <- NULL
   }
 
-  data <- as.data.frame(data,
-                        long = TRUE)
+  data <- parse_for_bf(data,
+                       time_lim,
+                       baseline)
 
-  plot_butterfly(data,
-                 time_lim,
-                 baseline,
-                 colourmap,
-                 legend,
-                 continuous,
-                 browse_mode)
+  create_bf(data,
+            legend = legend,
+            browse_mode = browse_mode,
+            continuous = FALSE)
+
   }
 
 #' @describeIn plot_butterfly Butterfly plot for EEG statistics
@@ -565,12 +564,14 @@ create_bf <- function(data,
                       continuous) {
 
   #Set up basic plot -----------
-  butterfly_plot <- ggplot2::ggplot(data,
-                                    aes(x = time,
-                                        y = amplitude))
+  butterfly_plot <-
+    ggplot2::ggplot(data,
+                    aes(x = time,
+                        y = amplitude))
 
   if (browse_mode) {
-    butterfly_plot <- butterfly_plot +
+    butterfly_plot <-
+      butterfly_plot +
       stat_summary(geom = "line",
                    fun.y = mean,
                    aes(group = electrode),

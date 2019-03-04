@@ -17,7 +17,7 @@ fortify.eeg_data <- function(model,
                                data,
                                ...) {
   as.data.frame(model,
-                long = TRUE ,
+                long = TRUE,
                 stringsAsFactors = FALSE)
 }
 
@@ -68,65 +68,11 @@ StatScalpmap <-
                                        data = data,
                                        FUN = mean)
 
-                     x_min <- min(data$x, na.rm = TRUE) * 2.5
-                     x_max <- max(data$x, na.rm = TRUE) * 2.5
-                     y_min <- min(data$y, na.rm = TRUE) * 2.5
-                     y_max <- max(data$y, na.rm = TRUE) * 2.5
-                     abs_y_max <- max(abs(data$y), na.rm = TRUE)
+                     data <- biharmonic(data,
+                                        grid_res = grid_res,
+                                        interp_limit = interp_limit)
+                     data
 
-                     xo <- seq(x_min,
-                               x_max,
-                               length = grid_res)
-                     yo <- seq(y_min,
-                               y_max,
-                               length = grid_res)
-                     xo <- matrix(rep(xo,
-                                      grid_res),
-                                  nrow = grid_res,
-                                  ncol = grid_res)
-                     yo <- t(matrix(rep(yo, grid_res),
-                                    nrow = grid_res,
-                                    ncol = grid_res))
-
-                     xy_coords <- unique(data[, c("x", "y")])
-                     xy <- xy_coords[, 1] + xy_coords[, 2] * sqrt(as.complex(-1))
-                     d <- matrix(rep(xy,
-                                     length(xy)),
-                                 nrow = length(xy),
-                                 ncol = length(xy))
-                     d <- abs(d - t(d))
-                     diag(d) <- 1
-                     g <- (d ^ 2) * (log(d) - 1) #Green's function
-                     diag(g) <- 0
-                     weights <- qr.solve(g, data$fill)
-                     xy <- t(xy)
-                     # Remind me to make this code readable at some point.
-                     outmat <-
-                       purrr::map(xo + sqrt(as.complex(-1)) * yo,
-                                  function(x) (abs(x - xy) ^ 2) *
-                                    (log(abs(x - xy)) - 1)) %>%
-                       rapply(function(x) ifelse(is.nan(x), 0, x),
-                              how = "replace") %>%
-                       purrr::map_dbl(function(x) x %*% weights)
-
-                     dim(outmat) <- c(grid_res, grid_res)
-                     data <- data.frame(x = xo[, 1],
-                                        outmat)
-                     names(data)[1:length(yo[1, ]) + 1] <- yo[1, ]
-                     data <- tidyr::gather(data,
-                                           key = y,
-                                           value = fill,
-                                           -x,
-                                           convert = TRUE)
-
-                     if (identical(interp_limit, "head")) {
-                       circ_scale <- abs_y_max * 1.1
-                     } else {
-                       circ_scale <- y_max / 1.8
-                     }
-
-                     data$incircle <- sqrt(data$x ^ 2 + data$y ^ 2) < circ_scale
-                     data[data$incircle, ]
                      }
 )
 
@@ -202,7 +148,7 @@ geom_topo <- function(mapping = NULL,
                       chan_markers = "point",
                       chan_size = rel(2),
                       head_size = rel(1.5),
-                      grid_res = 300,
+                      grid_res = 200,
                       ...) {
 
   list(ggplot2::layer(geom = GeomRaster,
@@ -294,6 +240,7 @@ GeomTopo <- ggplot2::ggproto("GeomTopo",
 #' \code{geom_head()} adds a headshape to a plot.
 #' @rdname stat_scalpmap
 #' @inheritParams ggplot2::geom_path
+#' @param r Radius of head
 #' @family topoplot functions
 #' @export
 geom_head <- function(mapping = NULL,
@@ -302,6 +249,7 @@ geom_head <- function(mapping = NULL,
                       na.rm = TRUE,
                       inherit.aes = TRUE,
                       interp_limit = "skirt",
+                      r = NULL,
                       ...) {
 
   list(ggplot2::layer(geom = GeomHead,
@@ -312,6 +260,7 @@ geom_head <- function(mapping = NULL,
                       inherit.aes = inherit.aes,
                       params = list(na.rm = na.rm,
                                     interp_limit = interp_limit,
+                                    r = r,
                                     ...)),
        ggplot2::layer(data = data,
                       mapping = mapping,
@@ -324,6 +273,7 @@ geom_head <- function(mapping = NULL,
                                     curvature = -.5,
                                     angle = 60,
                                     interp_limit = interp_limit,
+                                    r = r,
                                     ...)),
        ggplot2::layer(data = data,
                       mapping = mapping,
@@ -336,6 +286,7 @@ geom_head <- function(mapping = NULL,
                                     curvature = .5,
                                     angle = 120,
                                     interp_limit = interp_limit,
+                                    r = r,
                                     ...))
   )
 }
@@ -344,7 +295,13 @@ StatHead <- ggplot2::ggproto("StatHead",
                              Stat,
                              compute_group = function(data,
                                                       scales,
-                                                      interp_limit) {
+                                                      interp_limit,
+                                                      r = NULL) {
+
+                               if (!is.null(r)) {
+                                 heads <- make_head(r = r)
+                                 return(heads)
+                               }
 
                                if (identical(interp_limit, "head")) {
                                  y_lim <- max(abs(data$y),
@@ -353,6 +310,7 @@ StatHead <- ggplot2::ggproto("StatHead",
                                  y_lim <- max(data$y,
                                               na.rm = TRUE) * 1.1
                                }
+
                                heads <- make_head(r = y_lim)
                                heads
                              }
@@ -462,7 +420,12 @@ StatREar <- ggplot2::ggproto("StatREar",
                              Stat,
                              compute_group = function(data,
                                                       scales,
-                                                      interp_limit) {
+                                                      interp_limit,
+                                                      r = NULL) {
+
+                               if (!is.null(r)) {
+                                 return(make_r_ear(r = r))
+                               }
 
                                if (identical(interp_limit, "head")) {
                                  y_lim <- max(abs(data$y),
@@ -478,7 +441,12 @@ StatLEar <- ggplot2::ggproto("StatLEar",
                              Stat,
                              compute_group = function(data,
                                                       scales,
-                                                      interp_limit) {
+                                                      interp_limit,
+                                                      r = NULL) {
+
+                               if (!is.null(r)) {
+                                 return(make_l_ear(r = r))
+                               }
 
                                if (identical(interp_limit, "head")) {
                                  y_lim <- max(abs(data$y),
@@ -487,7 +455,7 @@ StatLEar <- ggplot2::ggproto("StatLEar",
                                  y_lim <- max(data$y,
                                               na.rm = TRUE) * 1.1
                                }
-                               make_l_ear(y_lim)
+                               make_l_ear(r = y_lim)
                              })
 
 #' Create a headshape
@@ -512,6 +480,7 @@ make_head <- function(r) {
 }
 
 #' Make right ear
+#' @param r Radius of head
 #' @keywords internal
 make_r_ear <- function(r) {
 
@@ -525,6 +494,7 @@ make_r_ear <- function(r) {
 }
 
 #' Make left ear
+#' @param r Radius of head
 #' @keywords internal
 make_l_ear <- function(r) {
   head_shape <- data.frame(x = r * cos(circ_rad_fun()),
@@ -581,4 +551,69 @@ geom_channels <- function(mapping = NULL,
                  inherit.aes = inherit.aes,
                  params = list(na.rm = na.rm,
                                ...))
+}
+
+biharmonic <- function(data,
+                       grid_res,
+                       interp_limit) {
+
+  x_min <- min(data$x, na.rm = TRUE) * 2.5
+  x_max <- max(data$x, na.rm = TRUE) * 2.5
+  y_min <- min(data$y, na.rm = TRUE) * 2.5
+  y_max <- max(data$y, na.rm = TRUE) * 2.5
+
+  abs_y_max <- max(abs(data$y), na.rm = TRUE)
+  xo <- seq(x_min,
+            x_max,
+            length = grid_res)
+  yo <- seq(y_min,
+            y_max,
+            length = grid_res)
+  xo <- matrix(rep(xo,
+                   grid_res),
+               nrow = grid_res,
+               ncol = grid_res)
+  yo <- t(matrix(rep(yo, grid_res),
+                 nrow = grid_res,
+                 ncol = grid_res))
+
+  xy_coords <- unique(data[, c("x", "y")])
+  xy <- xy_coords[, 1] + xy_coords[, 2] * sqrt(as.complex(-1))
+  d <- matrix(rep(xy,
+                  length(xy)),
+              nrow = length(xy),
+              ncol = length(xy))
+  d <- abs(d - t(d))
+  diag(d) <- 1
+  g <- (d ^ 2) * (log(d) - 1) #Green's function
+  diag(g) <- 0
+  weights <- qr.solve(g, data$fill)
+  xy <- t(xy)
+  # Remind me to make this code readable at some point.
+  outmat <-
+    purrr::map(xo + sqrt(as.complex(-1)) * yo,
+               function(x) (abs(x - xy) ^ 2) *
+                 (log(abs(x - xy)) - 1)) %>%
+    rapply(function(x) ifelse(is.nan(x), 0, x),
+           how = "replace") %>%
+    purrr::map_dbl(function(x) x %*% weights)
+
+  dim(outmat) <- c(grid_res, grid_res)
+  data <- data.frame(x = xo[, 1],
+                     outmat)
+  names(data)[1:length(yo[1, ]) + 1] <- yo[1, ]
+  data <- tidyr::gather(data,
+                        key = y,
+                        value = fill,
+                        -x,
+                        convert = TRUE)
+
+  if (identical(interp_limit, "head")) {
+    circ_scale <- abs_y_max * 1.1
+  } else {
+    circ_scale <- y_max / 1.8
+  }
+
+  data$incircle <- sqrt(data$x ^ 2 + data$y ^ 2) < circ_scale
+  data[data$incircle, ]
 }

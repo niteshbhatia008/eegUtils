@@ -19,9 +19,9 @@ Imports: ggplot2, dplyr, scales, mgcv, purrr, shiny, tidyr, miniUI,
         shinydashboard, plotly, future.apply
 Depends: R (>= 2.10)
 RoxygenNote: 6.1.1
-Suggests: testthat, vdiffr, covr, knitr, rmarkdown, ica, geigen
+Suggests: testthat, vdiffr, covr, knitr, rmarkdown, JADE, ica, geigen
 URL: https://github.com/craddm/eegUtils
 BugReports: https://github.com/craddm/eegUtils/issues
 VignetteBuilder: knitr
-biocViews:
 Repository: Neuroconductor
+biocViews: 
