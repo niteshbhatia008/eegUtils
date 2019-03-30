@@ -1,8 +1,8 @@
 Package: eegUtils
 Type: Package
 Title: A collection of utilities for EEG analysis
-Version: 0.3.0.9000
-Date: 2019-02-16
+Version: 0.4.0
+Date: 2019-03-29
 Authors@R: c( person("Matt", "Craddock", role = c("aut", "cre"), email
         = "matt@mattcraddock.com"), person("Matti", "Vuorre", role =
         "ctb", email = "mv2521@columbia.edu"))
@@ -19,7 +19,8 @@ Imports: ggplot2, dplyr, scales, mgcv, purrr, shiny, tidyr, miniUI,
         shinydashboard, plotly, future.apply
 Depends: R (>= 2.10)
 RoxygenNote: 6.1.1
-Suggests: testthat, vdiffr, covr, knitr, rmarkdown, JADE, ica, geigen
+Suggests: testthat, vdiffr, covr, knitr, rmarkdown, JADE, ica, geigen,
+        fICA
 URL: https://github.com/craddm/eegUtils
 BugReports: https://github.com/craddm/eegUtils/issues
 VignetteBuilder: knitr
