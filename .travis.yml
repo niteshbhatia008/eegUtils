@@ -1,5 +1,4 @@
 language: r
-sudo: false
 cache: packages
 warnings_are_errors: true
 use_bioc: true
@@ -30,6 +29,7 @@ env:
   - RGL_USE_NULL=TRUE
   - PROJECT_NAME=neuroconductor
   - DISPLAY=:99.0
+  - R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 r_check_args: "--as-cran --install-args=--build"
 before_install:
 - ulimit -n 2048
@@ -43,6 +43,7 @@ before_install:
 - if [ "$TRAVIS_OS_NAME" = "osx" ]; then no_open_mp ; fi
 - jags_install ;
 - v8_install ;
+- dcmtk_install ;
 - remove_neuroc_packages
 - cat DESCRIPTION
 - install_remotes_no_dep
@@ -79,7 +80,7 @@ deploy:
   on:
     tags: true
   api-key:
-    secure: REIIgoY0tIxZXxQEw4lh7yJgo1813wSlxToHgc+FSqGyBniTWykf31b99TzP2dNVdX+TMqMHDzv/2N7cDfFN+6ZAjNTTF/0rx1tpP6W4kZZtcw1DZWNkcU95w5Mcba/NqrlANkxXXFmHhu+6dB1Q65zQi93huJkqyu1veUmk/0lpFJ1JPJuD9C0TFPDm36YsyM42+wYTgJhMYr4WgmNVzev4gYXIS/FWShsub6ud0ETwmxVZiJvYzWcm2zLP/BbHoo5Q1Ag99GLCBu0njeCTJ5tahHeTaUl0YLmDYhPyfponPKXZGvPQCS8fXmRc9JdIhxcYpb7+911VKvlhJraJCYa3IZMHhTwuPBNNTobAKN21Xd0b86dPHfkECUlODIgBk1AR1c2ZO2QTPFKVwoko6D2i+JNThOWwkO0Xn1Nr2wtYkpocAse9B/a87a6KIi3fx5fhmZXZDwccnguEkMHnWs7NPlPrp+FzbkRhaby8UIyt/BVIE8IFFbmnRFMj1/Np0qIPqsQo1TugXBH2Pna0IO1sgswEJYg11+bnEw2qH4kiqMKIcD/2mfhl1LT9qA7Vd1sPI5AsE6n+dEZc0PvAQ3IvpsX263GnIj9ldPHFChgHaVJij/nqV6RQCDY7fU0nBAbXxic5MCmDXpVRTTw6HOUWScyoPvNzSu+KZJ3hcfc=
+    secure: akR3ssNJJtZQTK6D/MQVkhIS11ZZFBkPqh6ZTGuK5fJH9vxupa+Q0jtb/rB/gj/CwQUSowKmBWKxbeunBvcZu6P1hWPU5s1oN3psJ4P4dY+IHLQwAbOfO4b1BBMjH7Vhtb1h3FP/eyDl5gNUOvN8bqKbt33JQ+FKWkJvmpC7dC554kkUfGYLxVCh4DalIJHTBsIQIQ1iMTDNef/j4Ndyl8FxFJlMiblL/Rx6GwOsDgJxPUNSR3gz8aX+Ff3wHo/RbXTw2Erk2TqsCU5L6SOqBVD5OBLrFoNZUGFwEEsQzVD0fUVdnrYq9LotS5loRMT/6FesWmJAo17OFqxeIl0iob2nEz64OOc3piOgqtktrbi5jVCjSEMF/qIi96uOb49+eClcnvwBGG9NfMKHYzsE86ZvQeSEZANTKRjTMDkGUg7/RmEak6/nqP+nnkHJLezTWKyP8k8SbCCxAMtNx6PPPENIzoE2Pw9C2k0+E4q4GUESfLxOev+JPOKr0tOzAEd2ELUXy60afx4EWT0mRqe+uiiGaj5oBteY9elASUI/84xBUfgjySeWzQkAriGd8lgppMpnNPUf90iBcwYcoMEGhfIVsdgbfCh/x9w8IjDKyekSRkJgtyBJ3d6+UXzTLGSYy4Q7O5iP3VSY2g+bua0sCYu7M1X0RtaSifqMTmF1W80=
 after_deploy:
 - if [[ "${TRAVIS_OS_NAME}" == "linux" && ${TRAVIS_R_VERSION_STRING} = "release" ]];
   then echo 'covr::coveralls(type = "all", quiet = FALSE)' > neuroc_covr.R ; travis_wait
