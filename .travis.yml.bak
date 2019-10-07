@@ -1,0 +1,33 @@
+language: r
+cache: packages
+os:
+  - linux
+  - osx
+after_success:
+- cat ${PACKAGE_NAME}.Rcheck/00install.out
+- cat ${PACKAGE_NAME}.Rcheck/00check.log
+after_failure:
+- cat ${PACKAGE_NAME}.Rcheck/00install.out
+- cat ${PACKAGE_NAME}.Rcheck/00check.log
+before_deploy:
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then PKG_TARBALL=$(ls -1t *.tgz | head -n 1);
+  PKG_TARBALL_WITH_R=`echo $PKG_TARBALL | sed 's/.tgz/_'"R${rver}"'.tgz/'` ; mv ${PKG_TARBALL}
+  ${PKG_TARBALL_WITH_R} ; echo "Built tarball is ${PKG_TARBALL_WITH_R}" ; fi
+- if [ "$TRAVIS_OS_NAME" = "linux" ]; then PKG_TARBALL=$(ls -1t *.tar.gz | head -n
+  1); PKG_TARBALL_WITH_R=`echo $PKG_TARBALL | sed 's/.tar.gz/_'"R${rver}"'.tar.gz/'`
+  ; mv ${PKG_TARBALL} ${PKG_TARBALL_WITH_R} ; echo "Built tarball is ${PKG_TARBALL_WITH_R}"
+  ; fi
+- if [[ "${TRAVIS_OS_NAME}" = "osx" ]]; then rm -f *.tar.gz; fi
+deploy:
+  provider: releases
+  skip_cleanup: true
+  file_glob: true
+  file: "${PACKAGE_NAME}*.t*gz"
+  on:
+    tags: true
+  api-key:
+    secure: akR3ssNJJtZQTK6D/MQVkhIS11ZZFBkPqh6ZTGuK5fJH9vxupa+Q0jtb/rB/gj/CwQUSowKmBWKxbeunBvcZu6P1hWPU5s1oN3psJ4P4dY+IHLQwAbOfO4b1BBMjH7Vhtb1h3FP/eyDl5gNUOvN8bqKbt33JQ+FKWkJvmpC7dC554kkUfGYLxVCh4DalIJHTBsIQIQ1iMTDNef/j4Ndyl8FxFJlMiblL/Rx6GwOsDgJxPUNSR3gz8aX+Ff3wHo/RbXTw2Erk2TqsCU5L6SOqBVD5OBLrFoNZUGFwEEsQzVD0fUVdnrYq9LotS5loRMT/6FesWmJAo17OFqxeIl0iob2nEz64OOc3piOgqtktrbi5jVCjSEMF/qIi96uOb49+eClcnvwBGG9NfMKHYzsE86ZvQeSEZANTKRjTMDkGUg7/RmEak6/nqP+nnkHJLezTWKyP8k8SbCCxAMtNx6PPPENIzoE2Pw9C2k0+E4q4GUESfLxOev+JPOKr0tOzAEd2ELUXy60afx4EWT0mRqe+uiiGaj5oBteY9elASUI/84xBUfgjySeWzQkAriGd8lgppMpnNPUf90iBcwYcoMEGhfIVsdgbfCh/x9w8IjDKyekSRkJgtyBJ3d6+UXzTLGSYy4Q7O5iP3VSY2g+bua0sCYu7M1X0RtaSifqMTmF1W80=
+after_deploy:
+- if [[ "${TRAVIS_OS_NAME}" == "linux" && ${TRAVIS_R_VERSION_STRING} = "release" ]];
+  then echo 'covr::coveralls(type = "all", quiet = FALSE)' > neuroc_covr.R ; travis_wait
+  100 Rscript neuroc_covr.R ; rm neuroc_covr.R ; fi
