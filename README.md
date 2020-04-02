@@ -31,15 +31,15 @@ lot of changes. As such, it is not currently available on CRAN. Install
 the latest released version from Github as below.
 
 ``` r
-#install.packages("devtools")
-devtools::install_github("craddm/eegUtils")
+#install.packages("remotes")
+remotes::install_github("craddm/eegUtils")
 ```
 
 To install the latest development version, install from the *develop*
 branch as below.
 
 ``` r
-devtools::install_github("craddm/eegUtils@develop")
+remotes::install_github("craddm/eegUtils@develop")
 ```
 
 ### Usage
@@ -127,7 +127,6 @@ cores or processes through the *future* package.
 
 ``` r
 library(future)
-#> Warning: package 'future' was built under R version 3.5.3
 plan(multiprocess)
 plot_psd(eeg_example, 
          freq_range = c(0, 60),
@@ -135,7 +134,7 @@ plot_psd(eeg_example,
 #> Removing channel means...
 ```
 
-![](README_files/figure-gfm/do_filt-1.png)<!-- -->
+![](man/figures/do_filt-1.png)<!-- -->
 
 ``` r
 eeg_example <- eeg_filter(eeg_example,
@@ -152,7 +151,7 @@ plot_psd(eeg_example,
 #> Removing channel means...
 ```
 
-![](README_files/figure-gfm/do_filt-2.png)<!-- -->
+![](man/figures/do_filt-2.png)<!-- -->
 
 The next step is to epoch our filtered data. The trigger *201* marks
 stimulus onset.
@@ -160,6 +159,7 @@ stimulus onset.
 ``` r
 example_epochs <- epoch_data(eeg_example,
                              events = 201)
+#> Output limits:  -1 1
 #> Removing channel means per epoch...
 #> Creating 78 epochs.
 example_epochs
@@ -183,8 +183,8 @@ plot_butterfly(example_epochs,
                time_lim = c(-.1, .5))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> This outputs
-a *ggplot* object with some default styling already set.
+![](man/figures/unnamed-chunk-5-1.png)<!-- --> This outputs a *ggplot*
+object with some default styling already set.
 
 Now we might want a topographical plot. But BioSemi data files do not
 include channel locations, so we need to add them ourselves.
@@ -215,11 +215,12 @@ colour schemes.
 
 ``` r
 topoplot(example_epochs, time_lim = c(.25, .35))
+#> Using electrode locations from data.
 #> Warning in topoplot.data.frame(data, time_lim = time_lim, limits =
 #> limits, : Removing channels with no location.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](man/figures/unnamed-chunk-7-1.png)<!-- -->
 
 Since this is a *ggplot*, styling can be changed easily. For example, we
 could use a different colour scale, such as *viridis*.
@@ -228,13 +229,14 @@ could use a different colour scale, such as *viridis*.
 topoplot(example_epochs,
          time_lim = c(.25, .35)) +
   scale_fill_viridis_c()
+#> Using electrode locations from data.
 #> Warning in topoplot.data.frame(data, time_lim = time_lim, limits =
 #> limits, : Removing channels with no location.
 #> Scale for 'fill' is already present. Adding another scale for 'fill',
 #> which will replace the existing scale.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](man/figures/unnamed-chunk-8-1.png)<!-- -->
 
 At any point, `eegUtils` objects can be transformed into data frames for
 use with functions that don’t natively support them.
@@ -258,7 +260,7 @@ example_epochs %>%
   theme_classic()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](man/figures/unnamed-chunk-9-1.png)<!-- -->
 
 In addition, there are overloaded versions of some `dplyr` functions
 that operate on the `signals` element of `eeg_data` and `eeg_epochs`
@@ -286,4 +288,4 @@ example_epochs %>%
   theme_classic()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](man/figures/unnamed-chunk-10-1.png)<!-- -->

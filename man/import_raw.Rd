@@ -4,8 +4,14 @@
 \alias{import_raw}
 \title{Function for reading raw data.}
 \usage{
-import_raw(file_name, file_path = NULL, chan_nos = NULL,
-  recording = NULL, participant_id = character(1))
+import_raw(
+  file_name,
+  file_path = NULL,
+  chan_nos = NULL,
+  recording = NULL,
+  participant_id = character(1),
+  fast_bdf = TRUE
+)
 }
 \arguments{
 \item{file_name}{File to import. Should include file extension.}
@@ -18,6 +24,8 @@ import_raw(file_name, file_path = NULL, chan_nos = NULL,
 used.}
 
 \item{participant_id}{Identifier for the participant.}
+
+\item{fast_bdf}{New, faster method for loading BDF files. Experimental.}
 }
 \description{
 Currently BDF/EDF, 32-bit .CNT, and Brain Vision Analyzer files are

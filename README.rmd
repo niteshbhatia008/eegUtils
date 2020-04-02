@@ -7,7 +7,8 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE,
                       collapse = TRUE,
                       comment = "#>",
-                      eval = nzchar(Sys.getenv("EVAL_EEG_VIGNETTE")))
+                      eval = nzchar(Sys.getenv("EVAL_EEG_VIGNETTE")),
+                      fig.path = "man/figures/")
 ```
 
 [![Repo Status](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
@@ -25,14 +26,14 @@ knitr::opts_chunk$set(echo = TRUE,
 The package is very much under active development and is subject to a lot of changes. As such, it is not currently available on CRAN. Install the latest released version from Github as below.
 
 ```{r, eval = FALSE}
-#install.packages("devtools")
-devtools::install_packages("craddm/eegUtils")
+#install.packages("remotes")
+remotes::install_github("craddm/eegUtils")
 ```
 
 To install the latest development version, install from the *develop* branch as below.
 
 ```{r, eval = FALSE}
-devtools::install_packages("craddm/eegUtils@develop")
+remotes::install_github("craddm/eegUtils@develop")
 ```
 
 ### Usage
