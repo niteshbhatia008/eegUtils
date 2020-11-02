@@ -1,30 +1,59 @@
 Package: eegUtils
 Type: Package
-Title: A collection of utilities for EEG analysis
+Title: A collection of utilities for EEG analysis 
 Version: 0.5.0
 Date: 2019-11-03
-Authors@R: c( person("Matt", "Craddock", role = c("aut", "cre"), email
-        = "matt@mattcraddock.com"), person("Matti", "Vuorre", role =
-        "ctb", email = "mv2521@columbia.edu"))
+Authors@R: c(
+  person("Matt", "Craddock", role = c("aut", "cre"), email = "matt@mattcraddock.com"),
+  person("Matti", "Vuorre", role = "ctb", email = "mv2521@columbia.edu"))
 Maintainer: Matt Craddock <matt@mattcraddock.com>
-Description: A collection of functions for EEG processing. Includes
-        import functions for Biosemi (BDF) and Neuroscan (CNT),
-        topographical plotting, referencing, and epoching.
+Description: A collection of functions for EEG processing. Includes import
+  functions for Biosemi (BDF) and Neuroscan (CNT), topographical plotting, referencing, and epoching.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: ggplot2, dplyr, scales, mgcv, purrr, shiny, tidyr (>= 1.0.0),
-        miniUI, rlang (>= 0.4.0), MASS, Matrix, edfReader, signal,
-        tibble, stats, matrixStats, R.matlab, viridis, pracma, abind,
-        data.table, ini, shinydashboard, plotly, future.apply, Rcpp
-Depends: R (>= 3.2.0)
+Imports:
+    ggplot2,
+    dplyr,
+    scales,
+    mgcv,
+    purrr,
+    shiny,
+    tidyr (>= 1.0.0),
+    miniUI,
+    rlang (>= 0.4.0),
+    MASS,
+    Matrix,
+    edfReader,
+    signal,
+    tibble,
+    stats,
+    matrixStats,
+    R.matlab,
+    viridis,
+    pracma,
+    abind,
+    data.table,
+    ini,
+    shinydashboard,
+    plotly,
+    future.apply,
+    Rcpp
+Depends:
+  R (>= 3.2.0)
 RoxygenNote: 7.0.2
-Suggests: testthat, vdiffr, covr, knitr, rmarkdown, JADE, ica, geigen,
-        fICA
-URL: https://github.com/craddm/eegUtils,
-        https://craddm.github.io/eegUtils
+Suggests: testthat,
+    vdiffr,
+    covr,
+    knitr,
+    rmarkdown,
+    JADE,
+    ica,
+    geigen,
+    fICA
+URL: https://github.com/craddm/eegUtils, https://craddm.github.io/eegUtils
 BugReports: https://github.com/craddm/eegUtils/issues
 VignetteBuilder: knitr
-LinkingTo: Rcpp, RcppArmadillo
-biocViews:
-Repository: Neuroconductor
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo

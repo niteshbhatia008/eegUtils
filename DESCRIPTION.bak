@@ -26,4 +26,6 @@ URL: https://github.com/craddm/eegUtils,
 BugReports: https://github.com/craddm/eegUtils/issues
 VignetteBuilder: knitr
 LinkingTo: Rcpp, RcppArmadillo
+Repository: Neuroconductor
+biocViews:
 Remotes:
